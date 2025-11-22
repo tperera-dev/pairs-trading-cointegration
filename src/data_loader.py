@@ -22,9 +22,9 @@ class DataLoader:
         self.start_date = start_date
         self.end_date = end_date
         self.interval = interval
-        self._validate_dates()
+        self._validate_inputs()
 
-    def _validate_dates(self):
+    def _validate_inputs(self):
         """Ensure date range is valid"""
         valid_intervals = {'1m', '2m', '5m', '15m', '30m', '60m', '90m', '1h', '1d', '5d', '1wk', '1mo', '3mo'}
         intraday_intervals = {'1m', '2m', '5m', '15m', '30m', '60m', '90m', '1h'}
@@ -37,11 +37,11 @@ class DataLoader:
         if end_date_obj > pd.Timestamp.now():
             raise ValueError("End date cannot be in the future")
         if self.interval not in valid_intervals:
-            raise "Invalid interval"
+            raise ValueError("Invalid interval")
         if self.interval in intraday_intervals:
             duration = end_date_obj - start_date_obj
             if duration.days > 60:
-                raise "For intra-day intervals, duration cannot exceed 60 days."
+                raise ValueError("For intra-day intervals, duration cannot exceed 60 days.")
 
         
     def fetch_data(self, tickers):
