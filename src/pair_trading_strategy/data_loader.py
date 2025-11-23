@@ -42,6 +42,7 @@ class DataLoader:
             duration = end_date_obj - start_date_obj
             if duration.days > 60:
                 raise ValueError("For intra-day intervals, duration cannot exceed 60 days.")
+        print("Created a dataloader without any issues.")
 
         
     def fetch_data(self, tickers):
