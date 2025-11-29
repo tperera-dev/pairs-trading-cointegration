@@ -48,11 +48,8 @@ def run_pairs_trading_analysis(ticker_a, ticker_b, start_date, end_date):
         return None
     
     # Extract individual series
-    print(prices_clean)
     prices_a = prices_clean['Open'][ticker_a]
     prices_b = prices_clean['Open'][ticker_b]
-
-    print(prices_a)
 
     # ============================================================
     # STEP 2: INITIALIZE STRATEGY
@@ -130,7 +127,7 @@ def run_pairs_trading_analysis(ticker_a, ticker_b, start_date, end_date):
 
     backtester = Backtester(
         initial_capital=100000,
-        transaction_cost=0.001
+        transaction_cost=0.0005
     )
 
     results = backtester.run_backtest(prices_a, prices_b, signals, hedge_ratio)
@@ -147,9 +144,17 @@ def run_pairs_trading_analysis(ticker_a, ticker_b, start_date, end_date):
     # STEP 8: VISUALIZE
     # =============================================================================
 
-    print(results['equity'])
     backtester.plot_results(
+        ticker_a=ticker_a,
+        ticker_b=ticker_b,
+        start_date=start_date,
+        end_date=end_date,
         equity_curve=results['equity'],
+        returns=results['returns'],
+        returns_abs=results['returns_abs'],
+        transaction_costs=results['transaction_costs'],
+        positions_a=results['positions_a'],
+        positions_b=results['positions_b'],
         signals=signals,
         spread=spread,
         zscore=zscore,
@@ -162,9 +167,17 @@ if __name__ == "__main__":
     print("\n" + "="*70)
     print("EXAMPLE 1: KO vs PEP")
     print("="*70)
+
     analysis = run_pairs_trading_analysis(
-        ticker_a='SPY',
-        ticker_b='IVV',
+        ticker_a='KO',
+        ticker_b='PEP',
         start_date='2013-01-01',
         end_date='2015-01-01'
     )
+
+    # analysis = run_pairs_trading_analysis(
+    #     ticker_a='SPY',
+    #     ticker_b='IVV',
+    #     start_date='2013-01-01',
+    #     end_date='2015-01-01'
+    # )

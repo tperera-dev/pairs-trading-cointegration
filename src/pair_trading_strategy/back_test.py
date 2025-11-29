@@ -76,16 +76,21 @@ class Backtester:
         
         positions_a = -aligned_data['signal'] * position_value
         positions_b = aligned_data['signal'] * position_value * hedge_ratio
-        
+
         # Calculate portfolio returns
-        portfolio_returns = (
+        portfolio_returns_abs = (
             positions_a.shift(1) * aligned_data['return_a'] +
             positions_b.shift(1) * aligned_data['return_b']
-        ) / self.initial_capital
+         ) 
+        
+        portfolio_returns = portfolio_returns_abs / self.initial_capital
         
         # Apply transaction costs
         position_changes = aligned_data['signal'].diff().abs()
+
+        total_traded = positions_a.diff().abs() + positions_b.diff().abs()
         transaction_costs = position_changes * self.transaction_cost
+        total_transaction_costs =  total_traded * self.transaction_cost
         portfolio_returns -= transaction_costs
         
         # Calculate equity curve
@@ -98,6 +103,8 @@ class Backtester:
         return {
             'equity': equity,
             'returns': portfolio_returns,
+            'returns_abs': portfolio_returns_abs,
+            'transaction_costs' : total_transaction_costs,
             'positions_a': positions_a,
             'positions_b': positions_b,
             'trades': trade_dates
@@ -165,7 +172,9 @@ class Backtester:
             'Calmar Ratio': calmar_ratio
         }
     
-    def plot_results(self, equity_curve, signals, spread, zscore, prices_a, prices_b):
+    def plot_results(self, ticker_a, ticker_b, start_date, end_date, 
+                     equity_curve, returns, returns_abs, transaction_costs, positions_a, 
+                     positions_b, signals, spread, zscore, prices_a, prices_b):
         """
         Create comprehensive visualization of backtest results.
         
@@ -179,9 +188,9 @@ class Backtester:
         """
 
         
-        fig, axes = plt.subplots(3, 2, figsize=(15, 12))
-        fig.suptitle('Pairs Trading Strategy Performance', fontsize=16, y=1.00)
-        
+        fig, axes = plt.subplots(3, 3, figsize=(15, 12))
+        fig.suptitle('Pairs Trading Strategy Performance \n'+ticker_a+' vs '+ ticker_b +' : ' +start_date+ ' '+end_date, fontsize=16, y=1.00)
+
         # 1. Equity curve
         ax = axes[0, 0]
         equity_curve.plot(ax=ax, label='Portfolio Value', linewidth=2)
@@ -202,8 +211,8 @@ class Backtester:
         
         # 2. Price series
         ax = axes[0, 1]
-        (prices_a / prices_a.iloc[0]).plot(ax=ax, label='Stock A', linewidth=1.5)
-        (prices_b / prices_b.iloc[0]).plot(ax=ax, label='Stock B', linewidth=1.5)
+        (prices_a / prices_a.iloc[0]).plot(ax=ax, label=ticker_a, linewidth=1.5)
+        (prices_b / prices_b.iloc[0]).plot(ax=ax, label=ticker_b, linewidth=1.5)
         ax.set_title('Normalized Price Series')
         ax.set_ylabel('Normalized Price')
         ax.grid(True, alpha=0.3)
@@ -260,7 +269,30 @@ class Backtester:
         ax.set_ylabel('Sharpe Ratio')
         ax.grid(True, alpha=0.3)
         ax.legend()
-        
+    
+        # 7. Positions
+        ax = axes[0, 2]
+        positions_a.plot(ax=ax, label=ticker_a, linewidth=2)
+        positions_b.plot(ax=ax, label=ticker_b, linewidth=2)
+        ax.set_title('positions')
+        ax.set_ylabel('($)')
+        ax.grid(True, alpha=0.3)
+        ax.legend()
+
+        # 8. Absolute returns
+        ax = axes[1, 2]
+        returns_abs.plot(ax=ax, linewidth=2)
+        ax.set_title('Portfolio returns')
+        ax.set_ylabel('($)')
+        ax.grid(True, alpha=0.3)
+
+        # 9. Transaction costs
+        ax = axes[2, 2]
+        transaction_costs.plot(ax=ax, linewidth=2)
+        ax.set_title('transaction_costs')
+        ax.set_ylabel('($)')
+        ax.grid(True, alpha=0.3)
+
         plt.tight_layout()
-        # plt.savefig('results/backtest_results.png', dpi=300, bbox_inches='tight')
+        plt.savefig('results/backtest_results_'+ticker_a+'vs'+ticker_b+'.png', dpi=300, bbox_inches='tight')
         plt.show()
